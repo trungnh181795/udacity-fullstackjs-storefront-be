@@ -2,6 +2,7 @@ import jwt, { Secret } from "jsonwebtoken";
 import { ProcessResponse, Status, UserInterface } from "../types";
 import { NextFunction, Request, Response } from "express";
 import dotenv from "dotenv";
+import { messages } from "../constant";
 
 dotenv.config();
 
@@ -18,10 +19,10 @@ export const verifyToken = (
   next: NextFunction
 ): ProcessResponse<null> => {
   if (!req.headers.authorization) {
-    res.status(401).json({ error: "Access denied, invalid token" });
+    res.status(401).json({ error: messages.utils.invalidToken });
     return {
       status: Status.FAIL,
-      message: `Failed to verify token. Access denied, invalid token`,
+      message: messages.utils.invalidToken,
     };
   }
 
@@ -35,7 +36,7 @@ export const verifyToken = (
       message: "Verified token successfully"
     }
   } catch (err) {
-    res.status(401).json("Access denied, invalid token");
+    res.status(401).json(messages.utils.invalidToken);
 
     return {
       status: Status.FAIL,

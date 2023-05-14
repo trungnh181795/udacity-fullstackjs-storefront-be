@@ -7,7 +7,7 @@ import {
   getUserById,
   updateUserById,
 } from "../controllers/user";
-import { verifyToken } from "../utils/authentication-helper";
+import { verifyToken } from "../middleware/authentication";
 
 export default function user_routes(app: Application) {
   app.get("/users", getAllUsers);

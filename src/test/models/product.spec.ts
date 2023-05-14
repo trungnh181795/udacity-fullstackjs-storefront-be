@@ -1,87 +1,67 @@
+import { defaultValues, specs } from "../../constant";
 import { ProductStore } from "../../models/products";
 import { BaseProductInterface } from "../../types";
 
 const productStore = new ProductStore();
 
-describe("Product Model", () => {
-  const product: BaseProductInterface = {
-    name: "Mono",
-    price: 2000,
-  };
+describe(specs.models.product.describe, () => {
+  const product: BaseProductInterface = defaultValues.product;
 
-  async function createProduct(product: BaseProductInterface) {
-    return productStore.createProduct(product);
-  }
-
-  async function deleteProduct(id: number) {
-    return productStore.deleteProduct(id);
-  }
-
-  it("should have an index method", () => {
+  it(specs.models.product.it.haveGetAllProducts, () => {
     expect(productStore.getAllProducts).toBeDefined();
   });
 
-  it("should have a show method", () => {
-    expect(productStore.getProductById).toBeDefined();
-  });
-
-  it("should have a add method", () => {
+  it(specs.models.product.it.haveCreateProduct, () => {
     expect(productStore.createProduct).toBeDefined();
   });
 
-  it("should have a delete method", () => {
+  it(specs.models.product.it.haveGetProductById, () => {
+    expect(productStore.getProductById).toBeDefined();
+  });
+
+  it(specs.models.product.it.haveRemoveProduct, () => {
     expect(productStore.deleteProduct).toBeDefined();
   });
 
-  it("should add a product", async () => {
-    const { data: createdProduct } = await createProduct(product);
+  it(specs.models.product.it.canReturnProducts, async () => {
+    const { data: createdProduct } = await productStore.createProduct(product);
+    const { data: productList } = await productStore.getAllProducts();
+    expect(productList).toEqual([createdProduct]);
+    await productStore.deleteProduct(createdProduct.id);
+  });
+
+  it(specs.models.product.it.canCreateProduct, async () => {
+    const { data: createdProduct } = await productStore.createProduct(product);
     expect(createdProduct).toEqual({
       id: createdProduct.id,
       ...product,
     });
-    await deleteProduct(createdProduct.id);
+    await productStore.deleteProduct(createdProduct.id);
   });
 
-  it("should return a list of products", async () => {
-    const { data: productList } = await productStore.getAllProducts();
-    expect(productList).toEqual([
-      {
-        id: 1,
-        name: "Shoes",
-        price: 234,
-      },
-    ]);
-  });
-
-  it("should return the correct product", async () => {
-    const { data: createdProduct } = await createProduct(product);
+  it(specs.models.product.it.canReturnProductById, async () => {
+    const { data: createdProduct } = await productStore.createProduct(product);
     const { data: productData } = await productStore.getProductById(
       createdProduct.id
     );
     expect(productData).toEqual(createdProduct);
-    await deleteProduct(createdProduct.id);
+    await productStore.deleteProduct(createdProduct.id);
   });
 
-  it("should update the product", async () => {
-    const { data: createdProduct } = await createProduct(product);
-    const newProduct: BaseProductInterface = {
-      name: "New Product List",
-      price: 2423,
-    };
+  it(specs.models.product.it.canUpdateProduct, async () => {
+    const { data: createdProduct } = await productStore.createProduct(product);
+    const newProduct: BaseProductInterface = defaultValues.newProduct;
     const {
       data: { name, price },
     } = await productStore.updateProductById(createdProduct.id, newProduct);
     expect(name).toEqual(newProduct.name);
     expect(price).toEqual(newProduct.price);
-    await deleteProduct(createdProduct.id);
+    await productStore.deleteProduct(createdProduct.id);
   });
 
-  it("should remove the product", async () => {
-    const { data: createdProduct } = await createProduct(product);
-    expect(createdProduct).toEqual({
-      id: createdProduct.id,
-      name: "Mono",
-      price: 2000,
-    });
+  it(specs.models.product.it.canRemoveProduct, async () => {
+    const { data: createdProduct } = await productStore.createProduct(product);
+    await productStore.deleteProduct(createdProduct.id);
+    expect(createdProduct).toEqual({ id: createdProduct.id, ...product });
   });
 });

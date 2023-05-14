@@ -6,7 +6,7 @@ import {
   getOrderById,
   updateOrder,
 } from "../controllers/order";
-import { verifyToken } from "../utils/authentication-helper";
+import { verifyToken } from "../middleware/authentication";
 
 export default function orderRoutes(app: Application) {
   app.get("/orders", getAllOrders);

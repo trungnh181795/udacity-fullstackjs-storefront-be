@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { OrderStore } from "../models/orders";
-import { OrderProductInterface, OrderStatus } from "../types";
+import { OrderProductInterface, OrderStatus, Status } from "../types";
+import { messages } from "../constant";
 
 const orderStore = new OrderStore();
 
@@ -9,23 +10,16 @@ const getAllOrders = async (req: Request, res: Response) => {
     const { data: orders } = await orderStore.getAllOrders();
     res.json(orders);
   } catch (err) {
-    res.status(400);
-    res.json(err);
+    res.status(400).json(err);
   }
 };
 
 const createOrder = async (req: Request, res: Response) => {
   try {
-    const products = req.body.products as unknown as OrderProductInterface[];
-    const status = req.body.status as unknown as OrderStatus;
-    const user_id = req.body.user_id as unknown as number;
+    const { products, status, user_id } = req.body;
 
     if (!products || !status || !user_id) {
-      res.status(400);
-      res.send(
-        "Some required parameters are missing! eg. :products, :status, :user_id"
-      );
-      return false;
+      return res.status(400).send(messages.controllers.order.createOrderFailed);
     }
 
     const { data: order } = await orderStore.createOrder({
@@ -35,9 +29,8 @@ const createOrder = async (req: Request, res: Response) => {
     });
 
     res.json(order);
-  } catch (e) {
-    res.status(400);
-    res.json(e);
+  } catch (err) {
+    res.status(400).json(err);
   }
 };
 
@@ -46,44 +39,35 @@ const getOrderById = async (req: Request, res: Response) => {
     const id = req.params.id as unknown as number;
 
     if (!id) {
-      res.status(400);
-      res.send("Missing required parameter :id.");
-      return false;
+      return res
+        .status(400)
+        .send(messages.controllers.order.getOrderByIdFailed);
     }
 
     const { data: order } = await orderStore.getOrderById(id);
     res.json(order);
-  } catch (e) {
-    res.status(400);
-    res.json(e);
+  } catch (err) {
+    res.status(400).json(err);
   }
 };
 
 const updateOrder = async (req: Request, res: Response) => {
   try {
-    const id = req.params.id as unknown as number;
-    const products = req.body.products as unknown as OrderProductInterface[];
-    const status = req.body.status as unknown as OrderStatus;
-    const user_id = req.body.user_id as unknown as number;
+    const { id, products, status, user_id } = req.params;
 
     if (!products || !status || !user_id || !id) {
-      res.status(400);
-      res.send(
-        "Some required parameters are missing! eg. :products, :status, :user_id, :id"
-      );
-      return false;
+      return res.status(400).send(messages.controllers.order.updateOrderFailed);
     }
 
-    const { data: order } = await orderStore.updateOrderById(id, {
-      products,
-      status,
-      user_id,
+    const { data: order } = await orderStore.updateOrderById(parseInt(id), {
+      products: products as unknown as OrderProductInterface[],
+      status: status as unknown as OrderStatus,
+      user_id: user_id as unknown as number,
     });
 
     res.json(order);
-  } catch (e) {
-    res.status(400);
-    res.json(e);
+  } catch (err) {
+    res.status(400).json(err);
   }
 };
 
@@ -92,17 +76,14 @@ const deleteOrder = async (req: Request, res: Response) => {
     const id = req.params.id as unknown as number;
 
     if (!id) {
-      res.status(400);
-      res.send("Missing required parameter :id.");
-      return false;
+      return res.status(400).send(messages.controllers.order.deleteOrderFailed);
     }
 
     await orderStore.deleteOrder(id);
 
     res.send(`Order with id ${id} successfully deleted.`);
-  } catch (e) {
-    res.status(400);
-    res.json(e);
+  } catch (err) {
+    res.status(400).json(err);
   }
 };
 

@@ -1,77 +1,71 @@
+import { defaultValues, specs } from "../../constant";
 import { UserStore } from "../../models/users";
-import { BaseUserInterface, BaseUserWithAuthInterface } from "../../types";
+import { BaseUserInterface, BaseUserWithAuthInterface, UserInterface } from "../../types";
 
 const userStore = new UserStore();
 
-describe("User Model", () => {
-  const user: BaseUserWithAuthInterface = {
-    username: "ChrisAnne",
-    firstname: "Chris",
-    lastname: "Anne",
-    password: "password123",
-  };
+const testCorrectUser = (dataToTest: UserInterface, expectedData: BaseUserWithAuthInterface) => {
+  const { username, password, firstname, lastname } = dataToTest;
+  const expectedUser = { username, password, firstname, lastname };
 
-  async function createUser(user: BaseUserWithAuthInterface) {
-    return userStore.createUser(user);
-  }
+  return expect(expectedUser).toBe(expectedData);
+};
 
-  async function deleteUser(id: number) {
-    return userStore.deleteUserById(id);
-  }
+describe(specs.models.user.describe, () => {
+  const user: BaseUserWithAuthInterface = defaultValues.user;
 
-  it("should have getUser method", () => {
+  it(specs.models.user.it.haveGetAllUsers, () => {
     expect(userStore.getAllUsers).toBeDefined();
   });
 
-  it("should have a show method", () => {
+  it(specs.models.user.it.haveGetUserById, () => {
     expect(userStore.getUserById).toBeDefined();
   });
 
-  it("should have a create method", () => {
+  it(specs.models.user.it.haveCreateUser, () => {
     expect(userStore.createUser).toBeDefined();
   });
 
-  it("should have a remove method", () => {
+  it(specs.models.user.it.haveUpdateUser, () => {
+    expect(userStore.updateUserById).toBeDefined();
+  });
+
+  it(specs.models.user.it.haveRemoveUser, () => {
     expect(userStore.deleteUserById).toBeDefined();
   });
 
-  it("should create a user", async () => {
-    const { data: createdUser } = await createUser(user);
-    if (createdUser) {
-      expect(createdUser.username).toBe(user.username);
-      expect(createdUser.firstname).toBe(user.firstname);
-      expect(createdUser.lastname).toBe(user.lastname);
-    }
-    await deleteUser(createdUser.id);
-  });
-
-  it("should return a list of users", async () => {
+  it(specs.models.user.it.canReturnUsers, async () => {
     const { data: users } = await userStore.getAllUsers();
-    expect(users[0].username).toEqual("ChrisAnne");
-    expect(users[0].id).toEqual(1);
-    expect(users[0].firstname).toEqual("Chris");
-    expect(users[0].lastname).toEqual("Anne");
+    testCorrectUser(users[0], user)
   });
 
-  it(" should return the correct users", async () => {
-    const { data: createdUser } = await createUser(user);
+  it(specs.models.user.it.canCreateUser, async () => {
+    const { data: createdUser } = await userStore.createUser(user);
+
+    if (createdUser) {
+      testCorrectUser(createdUser, user)
+    }
+    await userStore.deleteUserById(createdUser.id);
+  });
+
+  it(specs.models.user.it.canReturnUserById, async () => {
+    const { data: createdUser } = await userStore.createUser(user);
     const { data: users } = await userStore.getUserById(createdUser.id);
     expect(users).toEqual(createdUser);
-    await deleteUser(createdUser.id);
+    await userStore.deleteUserById(createdUser.id);
   });
 
-  it("should remove the user", async () => {
-    const { data: createdUser } = await createUser(user);
-    await deleteUser(createdUser.id);
-    expect(createdUser.firstname).toEqual("Chris");
-    expect(createdUser.lastname).toEqual("Anne");
+  it(specs.models.user.it.canRemoveUser, async () => {
+    const { data: createdUser } = await userStore.createUser(user);
+    await userStore.deleteUserById(createdUser.id);
+    testCorrectUser(createdUser, user)
   });
 
-  it("should update the user", async () => {
-    const { data: createdUser } = await createUser(user);
+  it(specs.models.user.it.canUpdateUser, async () => {
+    const { data: createdUser } = await userStore.createUser(user);
     const newUserData: BaseUserInterface = {
-      firstname: "Kris",
-      lastname: "Han",
+      firstname: "John",
+      lastname: "Wick",
     };
 
     const {
@@ -80,6 +74,6 @@ describe("User Model", () => {
     expect(firstname).toEqual(newUserData.firstname);
     expect(lastname).toEqual(newUserData.lastname);
 
-    await deleteUser(createdUser.id);
+    await userStore.deleteUserById(createdUser.id);
   });
 });

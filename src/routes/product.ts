@@ -6,7 +6,7 @@ import {
   getProductById,
   updateProduct,
 } from "../controllers/product";
-import { verifyToken } from "../utils/authentication-helper";
+import { verifyToken } from "../middleware/authentication";
 
 export default function productRoutes(app: Application) {
   app.get("/products", getAllProducts);
