@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import supertest from "supertest";
 import app from "../../server";
-import { BaseUserWithAuthInterface, Status, orderStatus } from "../../types";
+import { BaseProductInterface, BaseUserWithAuthInterface } from "../../types";
 import { defaultValues, specs } from "../../constant";
-import { OrderStore } from "../../models/orders";
+import jwt, { Secret } from 'jsonwebtoken'
 
 const request = supertest(app);
+const SECRET = process.env.TOKEN_KEY as Secret;
 
 describe(specs.controller.order.describe, () => {
   const testData = {
@@ -17,14 +18,26 @@ describe(specs.controller.order.describe, () => {
 
   beforeAll(async () => {
     const userData: BaseUserWithAuthInterface = defaultValues.user;
+    const product: BaseProductInterface = defaultValues.product;
 
-    const { body: user } = await request.post("/users/create").send(userData);
-    const { body: products } = await request.get("/products");
-    testData.userToken = user.tokens;
-    testData.userId = user.user_id;
-    testData.productId = products[0].id;
-    console.log("testData", testData);
+    const { body: createdUser } = await request.post("/users/create").send(userData);
+    testData.userToken = createdUser.tokens;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const { user } = jwt.verify(testData.userToken, SECRET);
+    testData.userId = user.id;
+
+    const { body: createdProduct } = await request
+      .post("/products/create")
+      .send(product)
+      .set("Authorization", "bearer " + testData.userToken);
+
+    testData.productId = createdProduct.product.id;
   });
+
+  afterAll(async () => {
+    await request.delete(`/products/${testData.productId}`);
+  })
 
   it(specs.controller.order.it.haveGetAllOrderEndpoint, async () => {
     const { status } = await request
