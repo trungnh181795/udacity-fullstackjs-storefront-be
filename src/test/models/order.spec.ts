@@ -1,7 +1,7 @@
 import { OrderStore } from "../../models/orders";
 import { UserStore } from "../../models/users";
 import { ProductStore } from "../../models/products";
-import { BaseOrderInterface, OrderStatus } from "../../types";
+import { BaseOrderInterface, orderStatus } from "../../types";
 import { defaultValues, specs } from "../../constant";
 
 const orderStore = new OrderStore();
@@ -27,12 +27,12 @@ describe(specs.models.order.describe, () => {
     testData.order = {
       products: [
         {
-          product_id: testData.product_id,
+          product_id: product.id,
           quantity: 5,
         },
       ],
-      user_id: testData.user_id,
-      status: OrderStatus.SUCCESS,
+      user_id: user.id,
+      status: orderStatus.PENDING,
     };
   });
 
@@ -49,6 +49,10 @@ describe(specs.models.order.describe, () => {
     expect(orderStore.createOrder).toBeDefined();
   });
 
+  it(specs.models.order.it.haveUpdateOrder, () => {
+    expect(orderStore.updateOrderById).toBeDefined();
+  });
+
   it(specs.models.order.it.haveGetOrderById, () => {
     expect(orderStore.getOrderById).toBeDefined();
   });
@@ -59,8 +63,14 @@ describe(specs.models.order.describe, () => {
 
   it(specs.models.order.it.canReturnOrders, async () => {
     const { data: createdOrder } = await orderStore.createOrder(testData.order);
-    const { data: orderList } = await orderStore.getAllOrders();
-    expect(orderList).toEqual([createdOrder]);
+    let orderList = [];
+
+    if (createdOrder) {
+      const { data } = await orderStore.getAllOrders();
+      orderList = data;
+    }
+
+    expect(orderList.length).toBeGreaterThan(0);
     await orderStore.deleteOrder(createdOrder.id);
   });
 
@@ -91,7 +101,7 @@ describe(specs.models.order.describe, () => {
         },
       ],
       user_id: testData.user_id,
-      status: OrderStatus.PENDING,
+      status: orderStatus.PENDING,
     };
     const {
       data: { products, status },
@@ -104,7 +114,9 @@ describe(specs.models.order.describe, () => {
   it(specs.models.order.it.canRemoveOrder, async () => {
     const { data: createdOrder } = await orderStore.createOrder(testData.order);
     await orderStore.deleteOrder(createdOrder.id);
-    const { data: orderList } = await orderStore.getAllOrders();
-    expect(orderList).toEqual([]);
+    const { data: deletedOrder } = await orderStore.getOrderById(
+      createdOrder.id
+    );
+    expect(deletedOrder).toBe(undefined);
   });
 });

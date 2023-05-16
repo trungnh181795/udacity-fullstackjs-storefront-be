@@ -73,6 +73,13 @@ export class UserStore {
         [id]
       );
 
+      if (!rows || rows.length <= 0) {
+        return {
+          status: Status.FAIL,
+          message: `No user found for ${id}`
+        }
+      }
+
       return {
         status: Status.SUCCESS,
         data: rows[0],
@@ -96,6 +103,13 @@ export class UserStore {
         [firstname, lastname, id]
       );
 
+      if (!rows || rows.length === 0) {
+        return {
+          status: Status.FAIL,
+          message: `No user found for ${id}`,
+        }
+      }
+
       return {
         status: Status.SUCCESS,
         data: rows[0],
@@ -110,6 +124,18 @@ export class UserStore {
 
   async deleteUserById(id: number): Promise<ProcessResponse<null>> {
     try {
+      const rows = await useDatabase<UserInterface>(
+        this.sqlQueries.getUserById,
+        [id]
+      );
+
+      if (!rows || rows.length <= 0) {
+        return {
+          status: Status.FAIL,
+          message: `No user found for ${id}!`,
+        };
+      }
+
       await useDatabase<UserInterface>(this.sqlQueries.deleteUserById, [id]);
 
       return {

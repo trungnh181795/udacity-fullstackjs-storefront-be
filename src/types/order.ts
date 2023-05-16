@@ -6,14 +6,14 @@ export interface OrderProductInterface {
 export interface BaseOrderInterface {
   products: OrderProductInterface[];
   user_id: number;
-  status: OrderStatus
+  status: boolean
 }
 
 export interface OrderInterface extends BaseOrderInterface {
   id: number;
 }
 
-export enum OrderStatus {
-  PENDING = 'PENDING',
-  SUCCESS = 'SUCCESS',
+export const orderStatus = {
+  PENDING: false,
+  SUCCESS: true
 }

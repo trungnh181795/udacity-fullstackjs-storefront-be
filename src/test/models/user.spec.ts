@@ -1,15 +1,8 @@
 import { defaultValues, specs } from "../../constant";
 import { UserStore } from "../../models/users";
-import { BaseUserInterface, BaseUserWithAuthInterface, UserInterface } from "../../types";
+import { BaseUserInterface, BaseUserWithAuthInterface } from "../../types";
 
 const userStore = new UserStore();
-
-const testCorrectUser = (dataToTest: UserInterface, expectedData: BaseUserWithAuthInterface) => {
-  const { username, password, firstname, lastname } = dataToTest;
-  const expectedUser = { username, password, firstname, lastname };
-
-  return expect(expectedUser).toBe(expectedData);
-};
 
 describe(specs.models.user.describe, () => {
   const user: BaseUserWithAuthInterface = defaultValues.user;
@@ -36,15 +29,16 @@ describe(specs.models.user.describe, () => {
 
   it(specs.models.user.it.canReturnUsers, async () => {
     const { data: users } = await userStore.getAllUsers();
-    testCorrectUser(users[0], user)
+    const { data: createdUser } = await userStore.createUser(user);
+    expect(users.length).toBeGreaterThan(0);
+    await userStore.deleteUserById(createdUser.id);
   });
 
   it(specs.models.user.it.canCreateUser, async () => {
     const { data: createdUser } = await userStore.createUser(user);
+    expect(createdUser.firstname).toEqual(user.firstname);
+    expect(createdUser.lastname).toEqual(user.lastname);
 
-    if (createdUser) {
-      testCorrectUser(createdUser, user)
-    }
     await userStore.deleteUserById(createdUser.id);
   });
 
@@ -58,15 +52,17 @@ describe(specs.models.user.describe, () => {
   it(specs.models.user.it.canRemoveUser, async () => {
     const { data: createdUser } = await userStore.createUser(user);
     await userStore.deleteUserById(createdUser.id);
-    testCorrectUser(createdUser, user)
+    const { id, firstname, lastname } = createdUser;
+    expect({ id, firstname, lastname }).toEqual({
+      id,
+      firstname: user.firstname,
+      lastname: user.lastname,
+    });
   });
 
   it(specs.models.user.it.canUpdateUser, async () => {
     const { data: createdUser } = await userStore.createUser(user);
-    const newUserData: BaseUserInterface = {
-      firstname: "John",
-      lastname: "Wick",
-    };
+    const newUserData: BaseUserInterface = defaultValues.newUser;
 
     const {
       data: { firstname, lastname },

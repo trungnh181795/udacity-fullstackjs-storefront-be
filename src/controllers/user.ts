@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { UserStore } from "../models/users";
 import { defaultValues, messages } from "../constant";
 import { getUserToken } from "../middleware/authentication";
+import { Status } from "../types";
 
 const userStore = new UserStore();
 
@@ -29,9 +30,11 @@ const createUser = async (req: Request, res: Response) => {
       password,
     });
 
-    res.status(201).json(getUserToken(user));
+    res.status(201).json({
+      user_id: user.id,
+      tokens: getUserToken(user),
+    });
   } catch (err) {
-    console.log(err);
     res.status(400).json(err);
   }
 };
@@ -42,27 +45,37 @@ const getUserById = async (req: Request, res: Response) => {
     if (!id) {
       return res.status(400).send(messages.controllers.user.getUserByIdFailed);
     }
-    const { data: user } = await userStore.getUserById(id);
-    res.status(200).json(user);
-  } catch (e) {
-    res.status(400);
-    res.json(e);
+    const { data: user, status, message } = await userStore.getUserById(id);
+
+    if (status === Status.FAIL) {
+      res.status(404).json(message)
+    }
+
+    return res.status(200).json(user);
+  } catch (err) {
+    res.status(400).json(err);
   }
 };
 
 const updateUserById = async (req: Request, res: Response) => {
   try {
-    const { id, firstname, lastname } = req.params;
+    const { id } = req.params;
+    const { firstname, lastname } = req.body;
 
     if (!firstname || !lastname || !id) {
-      return res.status(400).send(messages.controllers.user);
+      return res.status(400).send(messages.controllers.user.updateUserFailed);
     }
 
-    const { data: user } = await userStore.updateUserById(parseInt(id), {
+    const { data: user, status, message } = await userStore.updateUserById(parseInt(id), {
       firstname,
       lastname,
     });
-    res.json(user);
+
+    if (status === Status.FAIL) {
+      return res.status(404).json(message)
+    }
+
+    return res.status(201).json(user);
   } catch (err) {
     res.status(400).json(err);
   }
@@ -74,8 +87,13 @@ const deleteUserById = async (req: Request, res: Response) => {
     if (!id) {
       return res.status(400).send(messages.controllers.user.deleteUserFailed);
     }
-    await userStore.deleteUserById(id);
-    res.send(`User with id ${id} successfully deleted.`);
+    const { status, message } = await userStore.deleteUserById(id);
+
+    if (status === Status.FAIL) {
+      return res.status(404).send(message);
+    }
+
+    return res.status(201).send(message);
   } catch (err) {
     res.status(400).json(err);
   }
@@ -94,7 +112,7 @@ const authenticate = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(401).send(`Wrong password for user ${username}.`);
     }
-    res.json(getUserToken(user));
+    res.status(200).json(getUserToken(user));
   } catch (err) {
     res.status(400).json(err);
   }

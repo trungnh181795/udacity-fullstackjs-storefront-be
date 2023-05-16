@@ -1,6 +1,5 @@
 import express, { Application, Request, Response } from "express";
 import bodyParser from "body-parser";
-import path from "path";
 import cors from "cors";
 
 import user_routes from "./routes/user";
@@ -20,7 +19,7 @@ app.use(
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get("/", (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, "../index.html"));
+  res.send("hello world");
 });
 
 user_routes(app);

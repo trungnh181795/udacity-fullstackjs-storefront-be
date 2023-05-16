@@ -61,6 +61,14 @@ export class ProductStore {
         this.sqlQueries.getProductById,
         [id]
       );
+
+      if (!rows || rows.length === 0) {
+        return {
+          status: Status.FAIL,
+          message: `No product found for ${id}`,
+        };
+      }
+
       return {
         status: Status.SUCCESS,
         data: rows[0],
@@ -84,6 +92,14 @@ export class ProductStore {
         this.sqlQueries.updateProductById,
         [newName, price, id]
       );
+
+      if (!rows || rows.length === 0) {
+        return {
+          status: Status.FAIL,
+          message: `No product found for ${id}`,
+        };
+      }
+
       return {
         status: Status.SUCCESS,
         data: rows[0],
@@ -99,12 +115,23 @@ export class ProductStore {
   async deleteProduct(id: number): Promise<ProcessResponse<ProductInterface>> {
     try {
       const rows = await useDatabase<ProductInterface>(
-        this.sqlQueries.deleteProductById,
+        this.sqlQueries.getProductById,
         [id]
       );
+
+      if (!rows || rows.length === 0) {
+        return {
+          status: Status.FAIL,
+          message: `No product found for ${id}`,
+        };
+      }
+
+      await useDatabase<ProductInterface>(this.sqlQueries.deleteProductById, [
+        id,
+      ]);
       return {
         status: Status.SUCCESS,
-        data: rows[0],
+        message: `Deleted product ${id} successfully!`,
       };
     } catch (err) {
       return {

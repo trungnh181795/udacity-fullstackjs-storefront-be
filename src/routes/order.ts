@@ -6,12 +6,12 @@ import {
   getOrderById,
   updateOrder,
 } from "../controllers/order";
-import { verifyToken } from "../middleware/authentication";
+import { verifyAuthToken } from "../middleware/authentication";
 
 export default function orderRoutes(app: Application) {
   app.get("/orders", getAllOrders);
-  app.post("/orders/create", verifyToken, createOrder);
-  app.get("/orders/:id", verifyToken, getOrderById);
-  app.put("/orders/:id", verifyToken, updateOrder);
-  app.delete("/orders/:id", verifyToken, deleteOrder);
+  app.post("/orders/create", verifyAuthToken, createOrder);
+  app.get("/orders/:id", verifyAuthToken, getOrderById);
+  app.put("/orders/:id", verifyAuthToken, updateOrder);
+  app.delete("/orders/:id", verifyAuthToken, deleteOrder);
 }

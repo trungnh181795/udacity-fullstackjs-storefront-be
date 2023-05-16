@@ -13,7 +13,7 @@ export const getUserToken = (user: UserInterface) => {
   return jwt.sign({ user }, TOKEN_KEY as Secret);
 };
 
-export const verifyToken = (
+export const verifyAuthToken = (
   req: Request,
   res: Response,
   next: NextFunction

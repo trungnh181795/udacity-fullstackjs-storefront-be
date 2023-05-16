@@ -4,12 +4,14 @@ import {
   OrderProductInterface,
   ProcessResponse,
   Status,
+  UserInterface,
 } from "../types";
 import { useDatabase } from "../utils/use-database";
 
 export class OrderStore {
   private readonly sqlQueries = {
     getAllOrders: "SELECT * FROM orders",
+    getUserById: "SELECT * FROM users WHERE id=($1)",
     getOrderProductsById:
       "SELECT product_id, quantity FROM order_products WHERE order_id=($1)",
     createOrder:
@@ -31,18 +33,27 @@ export class OrderStore {
       );
 
       const records: OrderInterface[] = [];
-      const orders = rows;
-
+      const orders = [...rows];
+      
+      if (!orders || rows.length === 0) {
+        return {
+          status: Status.FAIL,
+          message: 'No orders found',
+        };
+      }
+      
       for (const order of orders) {
         const rows = await useDatabase<OrderProductInterface>(
           this.sqlQueries.getOrderProductsById,
           [order.id]
         );
-        orders.push({
+
+        records.push({
           ...order,
           products: rows,
         });
       }
+
       return {
         status: Status.SUCCESS,
         data: records,
@@ -61,6 +72,15 @@ export class OrderStore {
     const { products, status, user_id } = order;
 
     try {
+      const users = await useDatabase<UserInterface>(this.sqlQueries.getUserById, [user_id]);
+
+      if (!users || users.length === 0) {
+        return {
+          status: Status.FAIL,
+          message: `No user found for ${user_id}`,
+        };
+      }
+
       const rows = await useDatabase<OrderInterface>(
         this.sqlQueries.createOrder,
         [user_id, status]
@@ -72,11 +92,18 @@ export class OrderStore {
       for (const product of products) {
         const { product_id, quantity } = product;
         const rows = await useDatabase<OrderProductInterface>(
-          this.sqlQueries.getOrderProductsById,
+          this.sqlQueries.createOrderProducts,
           [order.id, product_id, quantity]
         );
 
         orderProducts.push(rows[0]);
+      }
+
+      if (orderProducts.length === 0) {
+        return {
+          status: Status.FAIL,
+          message: `Products cannot be empty`,
+        }
       }
 
       return {
@@ -101,6 +128,14 @@ export class OrderStore {
         [id]
       );
       const order = rows[0];
+       
+      if (!order) {
+        return {
+          status: Status.FAIL,
+          message: `No order found for ${id}`,
+        }
+      }
+
       const orderProductRows = await useDatabase<OrderProductInterface>(
         this.sqlQueries.getOrderProductsById,
         [id]
@@ -125,6 +160,15 @@ export class OrderStore {
     orderData: BaseOrderInterface
   ): Promise<ProcessResponse<OrderInterface>> {
     const { products, status, user_id } = orderData;
+
+    const selectedOrder = await useDatabase<OrderInterface>(this.sqlQueries.getOrderById, [id])
+
+    if (!selectedOrder || selectedOrder.length === 0) {
+      return {
+        status: Status.FAIL,
+        message: `Order ${id} not found`
+      }
+    }
 
     try {
       const rows = await useDatabase<OrderInterface>(
@@ -156,17 +200,27 @@ export class OrderStore {
 
   async deleteOrder(id: number): Promise<ProcessResponse<OrderInterface>> {
     try {
+      const rows = await useDatabase<OrderInterface>(this.sqlQueries.getOrderById, [id]);
+
       await useDatabase<OrderInterface>(this.sqlQueries.deleteOrderProducts, [
         id,
       ]);
-      const rows = await useDatabase<OrderInterface>(
+      await useDatabase<OrderInterface>(
         this.sqlQueries.deleteOrderById,
         [id]
       );
       const order = rows[0];
+
+      if (!order) {
+        return {
+          status: Status.FAIL,
+          message: `No order found for ${id}`,
+        }
+      }
+
       return {
         status: Status.SUCCESS,
-        data: order,
+        message: `Delelted order ${id} successfully!`,
       };
     } catch (err) {
       return {

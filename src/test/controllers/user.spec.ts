@@ -1,103 +1,90 @@
 import supertest from "supertest";
 import jwt, { Secret } from "jsonwebtoken";
-
 import { BaseUserWithAuthInterface } from "../../types";
 import app from "../../server";
+import { defaultValues, specs } from "../../constant";
 
 const request = supertest(app);
 const SECRET = process.env.TOKEN_KEY as Secret;
 
-describe("User Handler", () => {
-  const userData: BaseUserWithAuthInterface = {
-    username: "ChrisAnne",
-    firstname: "Chris",
-    lastname: "Anne",
-    password: "password123",
+describe(specs.controller.user.describe, () => {
+  const userData: BaseUserWithAuthInterface = defaultValues.user;
+
+  const testData = {
+    userToken: null,
+    userId: null,
   };
 
-  let token: string,
-    userId = 1;
-
-  it("should gets the create endpoint", async (done) => {
-    const res = await request.post("/users/create").send(userData);
-
-    const { body, status } = res;
-    token = body;
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const { user } = jwt.verify(token, SECRET);
-    userId = user.id;
+  it(specs.controller.user.it.haveGetAllUserEndpoint, async () => {
+    const { status } = await request
+      .get("/users")
+      .set("Authorization", "bearer " + testData.userToken);
 
     expect(status).toBe(200);
-    done();
   });
 
-  it("should gets the index endpoint", async (done) => {
-    const res = await request
-      .get("/users")
-      .set("Authorization", "bearer " + token);
+  it(specs.controller.user.it.haveCreateUserEndpoint, async () => {
+    const { body, status } = await request.post("/users/create").send(userData);
+    testData.userToken = body.tokens;
 
-    expect(res.status).toBe(200);
-    done();
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
+    const { user } = jwt.verify(testData.userToken, SECRET);
+    testData.userId = user.id;
+
+    expect(status).toBe(201);
   });
 
-  it("should get the read endpoint", async (done) => {
-    const res = await request
-      .get(`/users/${userId}`)
-      .set("Authorization", "bearer " + token);
+  it(specs.controller.user.it.haveGetUserByIdEndpoint, async () => {
+    const { status } = await request
+      .get(`/users/${testData.userId}`)
+      .set("Authorization", "bearer " + testData.userToken);
 
-    expect(res.status).toBe(200);
-    done();
+    expect(status).toBe(200);
   });
 
-  it("should get the update endpoint", async (done) => {
+  it(specs.controller.user.it.haveUpdateUserEndpoint, async () => {
     const newUserData: BaseUserWithAuthInterface = {
       ...userData,
-      firstname: "Chris",
-      lastname: "Anne",
+      ...defaultValues.newUser,
     };
 
-    const res = await request
-      .put(`/users/${userId}`)
+    const { status } = await request
+      .put(`/users/${testData.userId}`)
       .send(newUserData)
-      .set("Authorization", "bearer " + token);
+      .set("Authorization", "bearer " + testData.userToken);
 
-    expect(res.status).toBe(200);
-    done();
+    expect(status).toBe(201);
   });
 
-  it("should get the auth endpoint", async (done) => {
-    const res = await request
+  it(specs.controller.user.it.haveAuthEndpoint, async () => {
+    const { status } = await request
       .post("/users/authenticate")
       .send({
         username: userData.username,
         password: userData.password,
       })
-      .set("Authorization", "bearer " + token);
+      .set("Authorization", "bearer " + testData.userToken);
 
-    expect(res.status).toBe(200);
-    done();
+    expect(status).toBe(200);
   });
 
-  it("should get the auth endpoint with wrong password", async (done) => {
-    const res = await request
+  it(specs.controller.user.it.haveRejectedAuthEndpoint, async () => {
+    const { status } = await request
       .post("/users/authenticate")
       .send({
         username: userData.username,
-        password: "trtdtxcfcf",
+        password: "wrong password",
       })
-      .set("Authorization", "bearer " + token);
+      .set("Authorization", "bearer " + testData.userToken);
 
-    expect(res.status).toBe(401);
-    done();
+    expect(status).toBe(401);
   });
 
-  it("should get the delete endpoint", async (done) => {
-    const res = await request
-      .delete(`/users/${userId}`)
-      .set("Authorization", "bearer " + token);
-    expect(res.status).toBe(200);
-    done();
+  it(specs.controller.user.it.haveRemoveUserEndpoint, async () => {
+    const { status } = await request
+      .delete(`/users/${testData.userId}`)
+      .set("Authorization", "bearer " + testData.userToken);
+    expect(status).toBe(201);
   });
 });

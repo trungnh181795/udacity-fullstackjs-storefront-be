@@ -1,131 +1,80 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import supertest from "supertest";
-import jwt, { Secret } from "jsonwebtoken";
-import { OrderStore } from "../../models/orders";
 import app from "../../server";
-import {
-  BaseProductInterface,
-  BaseUserWithAuthInterface,
-  OrderStatus,
-  Status,
-} from "../../types";
+import { BaseUserWithAuthInterface, Status, orderStatus } from "../../types";
+import { defaultValues, specs } from "../../constant";
+import { OrderStore } from "../../models/orders";
 
 const request = supertest(app);
 
-describe("Order Handler", () => {
-  let token: string;
+describe(specs.controller.order.describe, () => {
+  const testData = {
+    userToken: null,
+    userId: null,
+    productId: null,
+    orderId: null,
+  };
 
   beforeAll(async () => {
-    const userData: BaseUserWithAuthInterface = {
-      username: "ChrisAnne",
-      firstname: "Chris",
-      lastname: "Anne",
-      password: "password123",
-    };
+    const userData: BaseUserWithAuthInterface = defaultValues.user;
 
-    const productData: BaseProductInterface = {
-      name: "Shoes",
-      price: 234,
-    };
-
-    const { body: userBody } = await request
-      .post("/users/create")
-      .send(userData);
-    token = userBody;
-
-    spyOn(OrderStore.prototype, "createOrder").and.returnValue(
-      Promise.resolve({
-        status: Status.SUCCESS,
-        data: {
-          id: 1,
-          products: [
-            {
-              product_id: 5,
-              quantity: 5,
-            },
-          ],
-          user_id: 3,
-          status: OrderStatus.PENDING,
-        },
-      })
-    );
-
-    spyOn(OrderStore.prototype, "updateOrderById").and.returnValue(
-      Promise.resolve({
-        status: Status.SUCCESS,
-        data: {
-          id: 2,
-          products: [
-            {
-              product_id: 5,
-              quantity: 5,
-            },
-          ],
-          user_id: 3,
-          status: OrderStatus.PENDING,
-        },
-      })
-    );
+    const { body: user } = await request.post("/users/create").send(userData);
+    const { body: products } = await request.get("/products");
+    testData.userToken = user.tokens;
+    testData.userId = user.user_id;
+    testData.productId = products[0].id;
+    console.log("testData", testData);
   });
 
-  it("should create order endpoint", async (done) => {
-    const res = await request
-      .post("/orders/create")
-      .set("Authorization", "Bearer " + token)
-      .send({
-        id: 1,
-        products: [
-          {
-            product_id: 5,
-            quantity: 5,
-          },
-        ],
-        user_id: 3,
-        status: true,
-      });
-
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({
-      id: 1,
-      products: [
-        {
-          product_id: 5,
-          quantity: 5,
-        },
-      ],
-      user_id: 3,
-      status: true,
-    });
-    done();
-  });
-
-  it("gets the index endpoint", async (done) => {
-    request
+  it(specs.controller.order.it.haveGetAllOrderEndpoint, async () => {
+    const { status } = await request
       .get("/orders")
-      .set("Authorization", "bearer " + token)
-      .then((res) => {
-        expect(res.status).toBe(200);
-        done();
-      });
+      .set("Authorization", "bearer " + testData.userToken);
+
+    expect(status).toBe(200);
   });
 
-  it("should gets the read endpoint", async (done) => {
-    request
-      .get(`/orders/1`)
-      .set("Authorization", "bearer " + token)
-      .then((res) => {
-        expect(res.status).toBe(200);
-        done();
+  it(specs.controller.order.it.haveCreateOrderEndpoint, async () => {
+    const { status, body } = await request
+      .post("/orders/create")
+      .set("Authorization", "Bearer " + testData.userToken)
+      .send({
+        user_id: testData.userId,
+        products: defaultValues.order.products(testData.productId),
+        order_status: defaultValues.order.status
       });
+    testData.orderId = body.id;
+
+    expect(status).toBe(201);
   });
 
-  it("should gets the delete endpoint", async (done) => {
-    request
-      .delete(`/orders/2`)
-      .set("Authorization", "bearer " + token)
-      .then((res) => {
-        expect(res.status).toBe(200);
-        done();
+  it(specs.controller.order.it.haveGetOrderByIdEndpoint, async () => {
+    console.log('orderId', testData.orderId)
+    const { status } = await request
+      .get(`/orders/${testData.orderId}`)
+      .set("Authorization", "bearer " + testData.userToken);
+
+    expect(status).toBe(200);
+  });
+
+  it(specs.controller.order.it.haveUpdateOrderEndpoint, async () => {
+    const { status } = await request
+      .put(`/orders/${testData.orderId}`)
+      .set("Authorization", "Bearer " + testData.userToken)
+      .send({
+        user_id: testData.userId,
+        products: defaultValues.newOrder.products(testData.productId),
+        order_status: defaultValues.newOrder.status
       });
+
+    expect(status).toBe(201);
+  });
+
+  it(specs.controller.order.it.haveRemoveOrderEndpoint, async () => {
+    const { status } = await request
+      .delete(`/orders/${testData.orderId}`)
+      .set("Authorization", "bearer " + testData.userToken);
+
+    expect(status).toBe(201);
   });
 });

@@ -6,12 +6,12 @@ import {
   getProductById,
   updateProduct,
 } from "../controllers/product";
-import { verifyToken } from "../middleware/authentication";
+import { verifyAuthToken } from "../middleware/authentication";
 
 export default function productRoutes(app: Application) {
   app.get("/products", getAllProducts);
-  app.post("/products/create", verifyToken, createProduct);
+  app.post("/products/create", verifyAuthToken, createProduct);
   app.get("/products/:id", getProductById);
-  app.put("/products/:id", verifyToken, updateProduct);
-  app.delete("/products/:id", verifyToken, deleteProduct);
+  app.put("/products/:id", verifyAuthToken, updateProduct);
+  app.delete("/products/:id", verifyAuthToken, deleteProduct);
 }

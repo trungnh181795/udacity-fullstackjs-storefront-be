@@ -7,13 +7,13 @@ import {
   getUserById,
   updateUserById,
 } from "../controllers/user";
-import { verifyToken } from "../middleware/authentication";
+import { verifyAuthToken } from "../middleware/authentication";
 
 export default function user_routes(app: Application) {
   app.get("/users", getAllUsers);
   app.post("/users/create", createUser);
   app.get("/users/:id", getUserById);
-  app.put("/users/:id", verifyToken, updateUserById);
-  app.delete("/users/:id", verifyToken, deleteUserById);
+  app.put("/users/:id", verifyAuthToken, updateUserById);
+  app.delete("/users/:id", verifyAuthToken, deleteUserById);
   app.post("/users/authenticate", authenticate);
 }

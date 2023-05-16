@@ -46,4 +46,40 @@ export const specs = {
       },
     },
   },
+  controller: {
+    user: {
+      describe: "User Controller",
+      it: {
+        haveGetAllUserEndpoint: "should have the get all users endpoint",
+        haveCreateUserEndpoint: "should have the create user endpoint",
+        haveGetUserByIdEndpoint: "should have the get user by id endpoint",
+        haveUpdateUserEndpoint: "should have the update user endpoint",
+        haveRemoveUserEndpoint: "should have the remove user endpoint",
+        haveAuthEndpoint: "should have the auth endpoint",
+        haveRejectedAuthEndpoint:
+          "should have the rejected auth endpoint if wrong password",
+      },
+    },
+    product: {
+      describe: "Product Controller",
+      it: {
+        haveGetAllProductEndpoint: "should have the get all Products endpoint",
+        haveCreateProductEndpoint: "should have the create Product endpoint",
+        haveGetProductByIdEndpoint:
+          "should have the get Product by id endpoint",
+        haveUpdateProductEndpoint: "should have the update Product endpoint",
+        haveRemoveProductEndpoint: "should have the remove Product endpoint",
+      },
+    },
+    order: {
+      describe: "Order Controller",
+      it: {
+        haveGetAllOrderEndpoint: "should have the get all Orders endpoint",
+        haveCreateOrderEndpoint: "should have the create Order endpoint",
+        haveGetOrderByIdEndpoint: "should have the get Order by id endpoint",
+        haveUpdateOrderEndpoint: "should have the update Order endpoint",
+        haveRemoveOrderEndpoint: "should have the remove Order endpoint",
+      },
+    },
+  },
 };
